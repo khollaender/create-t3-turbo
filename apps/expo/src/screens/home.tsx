@@ -1,18 +1,13 @@
 import React from "react";
 
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { AppRouter } from "@acme/api";
 
-import { trpc } from "../utils/trpc";
+//import { trpc } from "../utils/trpc";
 
 const PostCard: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
@@ -26,12 +21,12 @@ const PostCard: React.FC<{
 };
 
 const CreatePost: React.FC = () => {
-  const utils = trpc.useContext();
-  const { mutate } = trpc.post.create.useMutation({
-    async onSuccess() {
-      await utils.post.all.invalidate();
-    },
-  });
+  //const utils = trpc.useContext();
+  // const { mutate } = trpc.post.create.useMutation({
+  //   async onSuccess() {
+  //     await utils.post.all.invalidate();
+  //   },
+  // });
 
   const [title, onChangeTitle] = React.useState("");
   const [content, onChangeContent] = React.useState("");
@@ -51,10 +46,10 @@ const CreatePost: React.FC = () => {
       <TouchableOpacity
         className="rounded bg-[#cc66ff] p-2"
         onPress={() => {
-          mutate({
-            title,
-            content,
-          });
+          // mutate({
+          //   title,
+          //   content,
+          // });
         }}
       >
         <Text className="font-semibold text-white">Publish post</Text>
@@ -64,7 +59,7 @@ const CreatePost: React.FC = () => {
 };
 
 export const HomeScreen = () => {
-  const postQuery = trpc.post.all.useQuery();
+  // const postQuery = trpc.post.all.useQuery();
   const [showPost, setShowPost] = React.useState<string | null>(null);
 
   return (
@@ -88,7 +83,7 @@ export const HomeScreen = () => {
         </View>
 
         <FlashList
-          data={postQuery.data}
+          // data={postQuery.data}
           estimatedItemSize={20}
           ItemSeparatorComponent={() => <View className="h-2" />}
           renderItem={(p) => (
