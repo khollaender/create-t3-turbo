@@ -9,6 +9,30 @@ import type { AppRouter } from "@acme/api";
 
 //import { trpc } from "../utils/trpc";
 
+import Crypto from "react-native-quick-crypto";
+
+const hashed = Crypto.createHash("sha256")
+  .update("Damn, Margelo writes hella good software!")
+  .digest("hex");
+console.log("hashed", hashed);
+
+const key = "233f8ce4ac6aa125927ccd98af5750d0";
+const iv = "2f3849399c60cb04b923bd33265b81c7";
+
+const plaintext =
+  "32|RmVZZkFUVmpRRkp0TmJaUm56ZU9qcnJkaXNNWVNpTTU*|iXmckfRWZBGWWELw" +
+  "eCBsThSsfUHLeRe0KCsK8ooHgxie0zOINpXxfZi/oNG7uq9JWFVCk70gfzQH8ZUJ" +
+  "jAfaFg**";
+const cipher = Crypto.createCipheriv("aes-256-gcm", key, iv);
+let ciph = cipher.update(plaintext, "utf8", "hex");
+ciph += cipher.final("hex");
+
+const decipher = Crypto.createDecipheriv("aes-256-gcm", key, iv);
+let txt = decipher.update(ciph, "hex", "utf8");
+txt += decipher.final("utf8");
+
+console.log("txt", txt);
+
 const PostCard: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
 }> = ({ post }) => {
