@@ -3,6 +3,7 @@
 
 import { data1k, data10k } from "./data";
 
+import Crypto from "react-native-quick-crypto";
 import CryptoJS from "crypto-js";
 
 const keySize = 256;
@@ -35,17 +36,27 @@ const generatePatientKey = () => {
 CryptoJS.lib.WordArray.random(128 / 8);
 
 const encryptWithKey = (msg: string, key: any) => {
-  const iv = CryptoJS.lib.WordArray.random(ivSize / 8);
+  //const iv = "2f3849399c60cb04b923bd33265b81c7";
 
-  const encrypted = CryptoJS.AES.encrypt(msg, key.value, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
+  const ivstring = new Buffer(Crypto.randomBytes(8));
+  const iv = ivstring.toString("hex");
+
+  //   const encrypted = CryptoJS.AES.encrypt(msg, key.value, {
+  //     iv: iv,
+  //     padding: CryptoJS.pad.Pkcs7,
+  //     mode: CryptoJS.mode.CBC,
+  //   });
+
+  const cipher = Crypto.createCipheriv("aes-256-cbc", key, iv);
+  let ciph = cipher.update(msg, "utf8", "hex");
+
+  ciph += cipher.final("hex");
+
+  //console.log("iv", iv);
 
   // salt, iv will be hex 32 in length
   // append them to the ciphertext for use  in decryption
-  const transitmessage = iv.toString() + encrypted.toString();
+  const transitmessage = iv.toString() + ciph.toString();
   //   console.log(`${iv.toString()}_${encrypted.toString()}`);
   //   console.log(
   //     "encrypted.toString():",
@@ -55,15 +66,19 @@ const encryptWithKey = (msg: string, key: any) => {
 };
 
 const decryptWithKey = (transitmessage: string, key: any) => {
-  const iv = CryptoJS.enc.Hex.parse(transitmessage.substr(0, 32));
-  const encrypted = transitmessage.substring(32);
+  const iv = transitmessage.substr(0, 16);
+  const encryptedData = transitmessage.substring(16);
+  //   const decrypted = CryptoJS.AES.decrypt(encrypted, key.value, {
+  //     iv: iv,
+  //     padding: CryptoJS.pad.Pkcs7,
+  //     mode: CryptoJS.mode.CBC,
+  //   });
 
-  const decrypted = CryptoJS.AES.decrypt(encrypted, key.value, {
-    iv: iv,
-    padding: CryptoJS.pad.Pkcs7,
-    mode: CryptoJS.mode.CBC,
-  });
-  return decrypted;
+  const decipher = Crypto.createDecipheriv("aes-256-cbc", key, iv);
+  let txt = decipher.update(encryptedData, "hex", "utf8");
+  txt += decipher.final("utf8");
+
+  return txt;
 };
 
 const decryptBase64 = (transitmessage: string, key: any) => {
@@ -130,7 +145,7 @@ const decryptObjPropsWithKey = (data: object, keyCrypto: any) => {
       decryptedData[key as keyof typeof data] = decryptWithKey(
         dataValue,
         keyCrypto,
-      ).toString(CryptoJS.enc.Utf8);
+      ).toString();
     }
   });
   return decryptedData;
@@ -153,25 +168,23 @@ const runTest = () => {
   //const key = generateKey("41435231323535552d4a312041757458");
   const key = patientKey;
 
-  console.time("encrypting1000");
   const encArray1000 = encryptArrayWithKey(data1k, key);
   console.log("encArray1000[999]", encArray1000[999]);
-  console.timeEnd("encrypting1000");
 
-  console.time("decrypting1000");
-  const decArray1000 = decryptArrayWithKey(encArray1000, key);
-  console.log("decArray1000[999]", decArray1000[999]);
-  console.timeEnd("decrypting1000");
+  //   console.time("decrypting1000");
+  //   const decArray1000 = decryptArrayWithKey(encArray1000, key);
+  //   console.log("decArray1000[999]", decArray1000[999]);
+  //   console.timeEnd("decrypting1000");
 
-  console.time("encrypting10000");
-  const encArray10000 = encryptArrayWithKey(data10k, key);
-  console.log("encArray10000[9999]", encArray10000[9999]);
-  console.timeEnd("encrypting10000");
+  //   console.time("encrypting10000");
+  //   const encArray10000 = encryptArrayWithKey(data10k, key);
+  //   console.log("encArray10000[9999]", encArray10000[9999]);
+  //   console.timeEnd("encrypting10000");
 
-  console.time("decrypting10000");
-  const decArray10000 = decryptArrayWithKey(encArray10000, key);
-  console.log("decArray10000[9999]", decArray10000[9999]);
-  console.timeEnd("decrypting10000");
+  //   console.time("decrypting10000");
+  //   const decArray10000 = decryptArrayWithKey(encArray10000, key);
+  //   console.log("decArray10000[9999]", decArray10000[9999]);
+  //   console.timeEnd("decrypting10000");
 };
 
 export {

@@ -20,10 +20,18 @@ import {
   encryptObjPropsWithKey,
   encryptArrayWithKey,
   decryptArrayWithKey,
+  // runTest,
+  //} from "./EncryptWithAESCrypto";
+  //} from "./EncryptWithJsCryptoAES2";
+  //} from "./EncryptWithCryptoJS";
+} from "./EncryptWithQuickCrypto";
+
+import {
   runTest,
   //} from "./EncryptWithAESCrypto";
   //} from "./EncryptWithJsCryptoAES2";
 } from "./EncryptWithCryptoJS";
+//} from "./EncryptWithQuickCrypto";
 
 import { data, data1k, data10k } from "./data";
 
@@ -31,28 +39,28 @@ import { data, data1k, data10k } from "./data";
 // var abc = crypto.createHash("sha1").update("abc").digest("hex");
 // console.log(abc);
 
-import CryptoES from "crypto-es";
-const rst = CryptoES.MD5("Message").toString();
+// import CryptoES from "crypto-es";
+// const rst = CryptoES.MD5("Message").toString();
 
-console.log("rst", rst);
+// console.log("rst", rst);
 
-import AesGcmCrypto from "react-native-aes-gcm-crypto";
+// import AesGcmCrypto from "react-native-aes-gcm-crypto";
 
-const key = "Yzg1MDhmNDYzZjRlMWExOGJkNTk5MmVmNzFkOGQyNzk=";
+// const key2 = "Yzg1MDhmNDYzZjRlMWExOGJkNTk5MmVmNzFkOGQyNzk=";
 
-AesGcmCrypto.decrypt(
-  "LzpSalRKfL47H5rUhqvA",
-  key,
-  "131348c0987c7eece60fc0bc",
-  "5baa85ff3e7eda3204744ec74b71d523",
-  false
-).then((decryptedData) => {
-  console.log(decryptedData);
-});
+// AesGcmCrypto.decrypt(
+//   "LzpSalRKfL47H5rUhqvA",
+//   key2,
+//   "131348c0987c7eece60fc0bc",
+//   "5baa85ff3e7eda3204744ec74b71d523",
+//   false
+// ).then((decryptedData) => {
+//   console.log(decryptedData);
+// });
 
-AesGcmCrypto.encrypt('{"name":"Hoge"}', false, key).then((result) => {
-  console.log(result);
-});
+// AesGcmCrypto.encrypt('{"name":"Hoge"}', false, key).then((result) => {
+//   console.log(result);
+// });
 
 // import { QuickCrypto as crypto } from "react-native-quick-crypto";
 
@@ -74,27 +82,89 @@ AesGcmCrypto.encrypt('{"name":"Hoge"}', false, key).then((result) => {
 // txt += decipher.final("utf8");
 // console.log("plaintext", plaintext);
 
-import {
-  SafeAreaView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import type { inferProcedureOutput } from "@trpc/server";
 import type { AppRouter } from "@acme/api";
 
-import { trpc } from "../utils/trpc";
+//import { trpc } from "../utils/trpc";
+
+import Crypto from "react-native-quick-crypto";
+
+const key = "ExchangePasswordPasswordExchange";
+const plaintext = "150.01";
+const iv = new Buffer(Crypto.randomBytes(8));
+const ivstring = iv.toString("hex");
+
+const cipher = Crypto.createCipheriv("aes-256-cbc", key, ivstring);
+const decipher = Crypto.createDecipheriv("aes-256-cbc", key, ivstring);
+
+cipher.update(plaintext, "utf8", "base64");
+const encryptedPassword = cipher.final("base64");
+
+console.log("iv", ivstring);
+
+console.log("encryptedPassword", encryptedPassword);
+
+const funcEnc = encryptWithKey(plaintext, key);
+
+console.log("funcEnc", funcEnc);
+
+const funcDec = decryptWithKey(funcEnc, key);
+console.log("funcDec", funcDec);
+
+// const key = "233f8ce4ac6aa125927ccd98af5750d0";
+// const iv = "2f3849399c60cb04b923bd33265b81c7";
+
+// const plaintext = "test";
+// const cipher = Crypto.createCipheriv("aes-256-gcm", key, iv);
+// let ciph = cipher.update(plaintext, "utf8", "hex");
+
+// console.log("ciph", ciph);
+
+// ciph += cipher.final("hex");
+
+// const decipher = Crypto.createDecipheriv("aes-256-gcm", key, iv);
+// let txt = decipher.update(ciph, "hex", "utf8");
+// txt += decipher.final("utf8");
+
+// console.log("txt", txt);
+
+const testENc = encryptArrayWithKey([{ hola: "test" }], key);
+console.log("testENc", testENc);
+
+console.time("QuickEncrypting1000");
+
+const encArray1000 = encryptArrayWithKey(data1k, key);
+console.log("encArray1000[999]", encArray1000[999]);
+console.timeEnd("QuickEncrypting1000");
+
+console.time("Qdecrypting1000");
+const decArray1000 = decryptArrayWithKey(encArray1000, key);
+console.log("QdecArray1000[999]", decArray1000[999]);
+console.timeEnd("Qdecrypting1000");
+
+console.time("Qencrypting10000");
+const encArray10000 = encryptArrayWithKey(data10k, key);
+console.log("encArray10000[9999]", encArray10000[9999]);
+console.timeEnd("Qencrypting10000");
+
+console.time("Qdecrypting10000");
+const decArray10000 = decryptArrayWithKey(encArray10000, key);
+console.log("decArray10000[9999]", decArray10000[9999]);
+console.timeEnd("Qdecrypting10000");
+
+runTest();
 
 const PostCard: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
 }> = ({ post }) => {
   return (
-    <View className="p-4 border-2 border-gray-500 rounded-lg">
-      <Text className="text-xl font-semibold text-gray-800">{post.title}</Text>
-      <Text className="text-gray-600">{post.content}</Text>
+    <View className="rounded-lg border-2 border-gray-500 p-4">
+      <Text className="text-xl font-semibold text-[#cc66ff]">{post.title}</Text>
+      <Text className="text-white">{post.content}</Text>
     </View>
   );
 };
@@ -102,12 +172,21 @@ const PostCard: React.FC<{
 const RunCryptoTest: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
 }> = ({ post }) => {
-  const utils = trpc.useContext();
-  const { mutate } = trpc.post.create.useMutation({
-    async onSuccess() {
-      await utils.post.all.invalidate();
-    },
-  });
+  // const utils = trpc.useContext();
+  // const { mutate } = trpc.post.create.useMutation({
+  //   async onSuccess() {
+  //     await utils.post.all.invalidate();
+  //   },
+  // });
+};
+
+const CreatePost: React.FC = () => {
+  //const utils = trpc.useContext();
+  // const { mutate } = trpc.post.create.useMutation({
+  //   async onSuccess() {
+  //     await utils.post.all.invalidate();
+  //   },
+  // });
 
   const [title, setTitle] = React.useState(post?.title);
   const [content, setContent] = React.useState(post?.content);
@@ -121,9 +200,9 @@ const RunCryptoTest: React.FC<{
     btoa(JSON.stringify(text));
 
   function hex_to_ascii(str1) {
-    var hex = str1.toString();
-    var str = "";
-    for (var n = 0; n < hex.length; n += 2) {
+    const hex = str1.toString();
+    let str = "";
+    for (let n = 0; n < hex.length; n += 2) {
       str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
     }
     return str;
@@ -390,30 +469,30 @@ const RunCryptoTest: React.FC<{
   };
 
   return (
-    <View className="p-4 border-t-2 border-gray-500 flex flex-col">
+    <View className="flex flex-col border-t-2 border-gray-500 p-4">
       <TextInput
-        className="border-2 border-gray-500 rounded p-2 mb-2"
+        className="mb-2 rounded border-2 border-gray-500 p-2"
         onChangeText={setTitle}
         placeholder="Title"
         value={title}
       />
       <TextInput
-        className="border-2 border-gray-500 rounded p-2 mb-2"
+        className="mb-2 rounded border-2 border-gray-500 p-2"
         onChangeText={setContent}
         placeholder="Content"
         value={content}
       />
       <TextInput
-        className="border-2 border-gray-500 rounded p-2 mb-2"
+        className="mb-2 rounded border-2 border-gray-500 p-2"
         onChangeText={setContent}
         placeholder="EncryptedContent"
         value={contentEncrypted}
       />
       <TouchableOpacity
-        className="bg-indigo-500 rounded p-2"
+        className="rounded bg-indigo-500 p-2"
         onPress={() => encryptText()}
       >
-        <Text className="text-white font-semibold">Encrypt Text</Text>
+        <Text className="font-semibold text-white">Encrypt Text</Text>
       </TouchableOpacity>
     </View>
   );
@@ -427,12 +506,14 @@ export const HomeScreen = () => {
     { id: 2, title: "test2", content: "asdasdasd asd asd asdasdas" },
   ];
 
+  // const postQuery = trpc.post.all.useQuery();
+
   const [showPost, setShowPost] = React.useState<string | null>(null);
 
   return (
-    <SafeAreaView>
+    <SafeAreaView className="bg-[#2e026d] bg-gradient-to-b from-[#2e026d] to-[#15162c]">
       <View className="h-full w-full p-4">
-        <Text className="text-5xl font-bold mx-auto pb-2">
+        <Text className="mx-auto pb-2 text-5xl font-bold">
           <Text className="text-indigo-500">Crypto</Text> test
         </Text>
 
@@ -443,12 +524,14 @@ export const HomeScreen = () => {
               {showPost.id}
             </Text>
           ) : (
-            <Text className="italic font-semibold">Press on a test</Text>
+            <Text className="font-semibold italic">Press on a test</Text>
           )}
         </View>
 
         <FlashList
           data={postQuery}
+          // data={postQuery.data}
+
           estimatedItemSize={20}
           ItemSeparatorComponent={() => <View className="h-2" />}
           renderItem={(p) => (

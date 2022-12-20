@@ -1,6 +1,6 @@
 # create-t3-turbo
 
-![Create T3 Turbo](https://user-images.githubusercontent.com/51714798/193696098-5ea53aa5-826f-411d-b694-b27f6a1d2421.png)
+<img width="1758" alt="turbo2" src="https://user-images.githubusercontent.com/51714798/202427720-4ec5f285-41a5-4fed-a52f-20b89c5bc1b3.png">
 
 ## About
 
@@ -33,6 +33,16 @@ packages
  └─ db
      └─ typesafe db-calls using Prisma
 ```
+
+## FAQ
+
+### Can you include Solito?
+
+No. Solito will not be included in this repo. It is a great tool if you want to share code between your Next.js and Expo app. However, the main purpose of this repo is not the integration between Next.js and Expo - it's the codesplitting of your T3 App into a monorepo, the Expo app is just a bonus example of how you can utilize the monorepo with multiple apps but can just as well be any app such as Vite, Electron, etc.
+
+### What auth solution should I use instead of Next-Auth.js for Expo?
+
+I've left this kind of open for you to decide. Some options are [Clerk](https://clerk.dev), [Supabase Auth](https://supabase.com/docs/guides/auth), [Firebase Auth](https://firebase.google.com/docs/auth/) or [Auth0](https://auth0.com/docs). Note that if you're dropping the Expo app for something more "browser-like", you can still use Next-Auth.js for those.
 
 ## Quick Start
 
@@ -96,7 +106,10 @@ _We do not recommend deploying a SQLite database on serverless environments sinc
 Let's deploy the Next.js application to [Vercel](https://vercel.com/). If you have ever deployed a Turborepo app there, the steps are quite straightforward. You can also read the [official Turborepo guide](https://vercel.com/docs/concepts/monorepos/turborepo) on deploying to Vercel.
 
 1. Create a new project on Vercel, select the `apps/nextjs` folder as the root directory and apply the following build settings:
-   <img width="907" alt="CleanShot 2022-09-03 at 22 51 25@2x" src="https://user-images.githubusercontent.com/51714798/188287309-e6ff4cb9-827a-4e50-83ed-e0953d7752f9.png">
+
+<img width="927" alt="Vercel deployment settings" src="https://user-images.githubusercontent.com/11340449/201974887-b6403a32-5570-4ce6-b146-c486c0dbd244.png">
+
+> The install command filters out the expo package and saves a few second (and cache size) of dependency installation. The build command makes us build the application using Turbo.
 
 2. Add your `DATABASE_URL` environment variable.
 
