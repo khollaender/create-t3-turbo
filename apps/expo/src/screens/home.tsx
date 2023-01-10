@@ -3,6 +3,8 @@ import CryptoJS from "crypto-js";
 import { btoa, atob } from "react-native-quick-base64";
 import "react-native-console-time-polyfill";
 
+import { Buffer } from "buffer";
+
 import {
   encrypt,
   decrypt,
@@ -34,6 +36,10 @@ import {
 //} from "./EncryptWithQuickCrypto";
 
 import { data, data1k, data10k } from "./data";
+
+// import crypto from "crypto";
+// const abc = crypto.createHash("sha1").update("abc").digest("hex");
+// console.log("abc:", abc);
 
 // import crypto from "crypto";
 // var abc = crypto.createHash("sha1").update("abc").digest("hex");
@@ -82,7 +88,7 @@ import { data, data1k, data10k } from "./data";
 // txt += decipher.final("utf8");
 // console.log("plaintext", plaintext);
 
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Button, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
@@ -91,29 +97,141 @@ import type { AppRouter } from "@acme/api";
 
 //import { trpc } from "../utils/trpc";
 
-import Crypto from "react-native-quick-crypto";
+// import Crypto from "react-native-quick-crypto";
 
-const key = "ExchangePasswordPasswordExchange";
-const plaintext = "150.01";
-const iv = new Buffer(Crypto.randomBytes(8));
-const ivstring = iv.toString("hex");
+// const key = "39c1712d006939069338ec8dad160e0e";
+// const plaintext = "150.01";
+// const iv = new Buffer(Crypto.randomBytes(8));
+// //const ivstring = iv.toString("hex");
 
-const cipher = Crypto.createCipheriv("aes-256-cbc", key, ivstring);
-const decipher = Crypto.createDecipheriv("aes-256-cbc", key, ivstring);
+// const ivstring = "134d75c8a1c5e61e60ea02f6";
 
-cipher.update(plaintext, "utf8", "base64");
-const encryptedPassword = cipher.final("base64");
+// const cipher = Crypto.createCipheriv("aes-256-gcm", key, ivstring);
+// const decipher = Crypto.createDecipheriv("aes-256-gcm", key, ivstring);
 
-console.log("iv", ivstring);
+// cipher.update(plaintext, "utf8", "base64");
+// const encryptedPassword = cipher.final("base64");
 
-console.log("encryptedPassword", encryptedPassword);
+// console.log("iv", ivstring);
 
-const funcEnc = encryptWithKey(plaintext, key);
+// console.log("encryptedPassword", encryptedPassword);
 
-console.log("funcEnc", funcEnc);
+// const funcEnc = encryptWithKey(plaintext, key);
 
-const funcDec = decryptWithKey(funcEnc, key);
-console.log("funcDec", funcDec);
+// console.log("funcEnc", funcEnc);
+
+// const funcDec = decryptWithKey("b916ad318a2a80d29a7a320a7045b78f812ce14b", key);
+// console.log("funcDec", funcDec);
+
+import crypto from "isomorphic-webcrypto";
+import hex from "hex-lite";
+
+crypto.subtle
+  .digest({ name: "SHA-256" }, new Uint8Array([1, 2, 3]).buffer)
+  .then((hash) => {
+    // hashes are usually represented as hex strings
+    // hex-lite makes this easier
+    const hashString = hex.fromBuffer(hash);
+    console.log("hashString", hashString);
+  });
+
+const base64ToUint8 = (str: string): Uint8Array =>
+  Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
+
+const importKey = async (keyToken) => {
+  let newKey;
+
+  newKey = await crypto.subtle.importKey(
+    "jwk", //can be "jwk" or "raw"
+    {
+      //this is an example jwk key, "raw" would be an ArrayBuffer
+      kty: "oct",
+      k: keyToken,
+      alg: "A128GCM",
+      ext: true,
+    },
+    {
+      //this is the algorithm options
+      name: "AES-GCM",
+    },
+    false, //whether the key is extractable (i.e. can be used in exportKey)
+    ["encrypt", "decrypt"], //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
+  );
+  // .then(function (aesKey) {
+  //   //returns the symmetric key
+  //   console.log(aesKey);
+
+  //   // const decryptData2 = await decrypt2(
+  //   //   aesKey,
+  //   //   "0TwFgJcUhikOWput_WEYZTDzQ6c17VGqfiDigbtvUpek=",
+  //   //   "string",
+  //   // );
+
+  //   // console.log("decryptData2", decryptData2);
+  // })
+  // .catch(function (err) {
+  //   console.error(err);
+  // });
+
+  return newKey;
+};
+
+export const decrypt2 = async (
+  key: CryptoKey,
+  dataWithIV: string | null,
+  valueType: string,
+): Promise<Encryptable | null> => {
+  if (!dataWithIV) return null;
+
+  const parts = dataWithIV.split("_");
+  const iv = base64ToUint8(parts[0]);
+  console.log("iv", parts[0], iv);
+
+  const encryptedBytes = base64ToUint8(parts[1]);
+
+  let decryptedBytes;
+  try {
+    decryptedBytes = await crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: iv,
+        tagLength: 128,
+      },
+      key,
+      encryptedBytes,
+    );
+  } catch (e) {
+    console.log("error", e);
+  }
+  if (!decryptedBytes) throw Error("invalid");
+
+  const decryptedString = new Uint8Array(decryptedBytes);
+
+  switch (valueType) {
+    case "string":
+      return Buffer.from(decryptedBytes).toString("utf8");
+    case "number":
+      return Buffer.from(decryptedBytes).readUIntBE(
+        0,
+        decryptedBytes.byteLength,
+      );
+    case "object":
+      return JSON.parse(Buffer.from(decryptedBytes).toString("utf8"));
+    case "boolean":
+      return false;
+    // dataArray = Uint8Array.of(data);
+  }
+
+  console.log(decryptedString);
+
+  return decryptedString;
+};
+
+// const decryptData2 = await decrypt2(
+//   aesKey,
+//   "0TwFgJcUhikOWput_WEYZTDzQ6c17VGqfiDigbtvUpek=",
+//   "string",
+// );
 
 // const key = "233f8ce4ac6aa125927ccd98af5750d0";
 // const iv = "2f3849399c60cb04b923bd33265b81c7";
@@ -132,31 +250,45 @@ console.log("funcDec", funcDec);
 
 // console.log("txt", txt);
 
-const testENc = encryptArrayWithKey([{ hola: "test" }], key);
-console.log("testENc", testENc);
+// const testENc = encryptArrayWithKey([{ hola: "test" }], key);
+// console.log("testENc", testENc);
 
-console.time("QuickEncrypting1000");
+// console.time("QuickEncrypting1000");
 
-const encArray1000 = encryptArrayWithKey(data1k, key);
-console.log("encArray1000[999]", encArray1000[999]);
-console.timeEnd("QuickEncrypting1000");
+// const encArray1000 = encryptArrayWithKey(data1k, key);
+// console.log("encArray1000[999]", encArray1000[999]);
+// console.timeEnd("QuickEncrypting1000");
 
-console.time("Qdecrypting1000");
-const decArray1000 = decryptArrayWithKey(encArray1000, key);
-console.log("QdecArray1000[999]", decArray1000[999]);
-console.timeEnd("Qdecrypting1000");
+// console.time("Qdecrypting1000");
+// const decArray1000 = decryptArrayWithKey(encArray1000, key);
+// console.log("QdecArray1000[999]", decArray1000[999]);
+// console.timeEnd("Qdecrypting1000");
 
-console.time("Qencrypting10000");
-const encArray10000 = encryptArrayWithKey(data10k, key);
-console.log("encArray10000[9999]", encArray10000[9999]);
-console.timeEnd("Qencrypting10000");
+// console.time("Qencrypting10000");
+// const encArray10000 = encryptArrayWithKey(data10k, key);
+// console.log("encArray10000[9999]", encArray10000[9999]);
+// console.timeEnd("Qencrypting10000");
 
-console.time("Qdecrypting10000");
-const decArray10000 = decryptArrayWithKey(encArray10000, key);
-console.log("decArray10000[9999]", decArray10000[9999]);
-console.timeEnd("Qdecrypting10000");
+// console.time("Qdecrypting10000");
+// const decArray10000 = decryptArrayWithKey(encArray10000, key);
+// console.log("decArray10000[9999]", decArray10000[9999]);
+// console.timeEnd("Qdecrypting10000");
 
-runTest();
+// runTest();
+
+const test = async () => {
+  const aesKey = await importKey("zzlJ8cyW0e3KB45kFFjaKA");
+
+  console.log("key new", aesKey);
+
+  const decryptData2 = await decrypt2(
+    aesKey,
+    "0TwFgJcUhikOWput_WEYZTDzQ6c17VGqfiDigbtvUpek=",
+    "string",
+  );
+
+  console.log("decryptData2", decryptData2);
+};
 
 const PostCard: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
@@ -172,12 +304,8 @@ const PostCard: React.FC<{
 const RunCryptoTest: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
 }> = ({ post }) => {
-  // const utils = trpc.useContext();
-  // const { mutate } = trpc.post.create.useMutation({
-  //   async onSuccess() {
-  //     await utils.post.all.invalidate();
-  //   },
-  // });
+  console.log("testing ");
+  test();
 };
 
 const CreatePost: React.FC = () => {
@@ -338,16 +466,16 @@ const CreatePost: React.FC = () => {
     //   console.log(result);
     // });
 
-    const patientKey = generatePatientKey();
-    console.log("patientKey:", patientKey.value.toString(CryptoJS.enc.Hex));
+    // const patientKey = generatePatientKey();
+    // console.log("patientKey:", patientKey.value.toString(CryptoJS.enc.Hex));
 
-    //const key = generateKey("41435231323535552d4a312041757458");
-    const key = patientKey;
+    // //const key = generateKey("41435231323535552d4a312041757458");
+    // const key = patientKey;
 
-    console.time("encrypting1000");
-    const encArray1000 = encryptArrayWithKey(data1k, key);
-    //console.log("encArray1000[999]", encArray1000[999]);
-    console.timeEnd("encrypting1000");
+    // console.time("encrypting1000");
+    // const encArray1000 = encryptArrayWithKey(data1k, key);
+    // //console.log("encArray1000[999]", encArray1000[999]);
+    // console.timeEnd("encrypting1000");
 
     // console.time("decrypting1000");
     // const decArray1000 = decryptArrayWithKey(encArray1000, key);
