@@ -6,12 +6,12 @@ import "react-native-console-time-polyfill";
 import { Buffer } from "buffer";
 
 import {
-  encrypt,
-  decrypt,
-  encryptObjProps,
-  decryptObjProps,
-  encryptArray,
-} from "./Encrypt";
+  encryptNative,
+  decryptNative,
+  importKey,
+  decryptAllPropsNative,
+  encryptAllPropsNative,
+} from "crypto";
 
 import {
   generateKey,
@@ -138,95 +138,6 @@ crypto.subtle
 const base64ToUint8 = (str: string): Uint8Array =>
   Uint8Array.from(atob(str), (c) => c.charCodeAt(0));
 
-const importKey = async (keyToken) => {
-  let newKey;
-
-  newKey = await crypto.subtle.importKey(
-    "jwk", //can be "jwk" or "raw"
-    {
-      //this is an example jwk key, "raw" would be an ArrayBuffer
-      kty: "oct",
-      k: keyToken,
-      alg: "A128GCM",
-      ext: true,
-    },
-    {
-      //this is the algorithm options
-      name: "AES-GCM",
-    },
-    false, //whether the key is extractable (i.e. can be used in exportKey)
-    ["encrypt", "decrypt"], //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-  );
-  // .then(function (aesKey) {
-  //   //returns the symmetric key
-  //   console.log(aesKey);
-
-  //   // const decryptData2 = await decrypt2(
-  //   //   aesKey,
-  //   //   "0TwFgJcUhikOWput_WEYZTDzQ6c17VGqfiDigbtvUpek=",
-  //   //   "string",
-  //   // );
-
-  //   // console.log("decryptData2", decryptData2);
-  // })
-  // .catch(function (err) {
-  //   console.error(err);
-  // });
-
-  return newKey;
-};
-
-export const decrypt2 = async (
-  key: CryptoKey,
-  dataWithIV: string | null,
-  valueType: string,
-): Promise<Encryptable | null> => {
-  if (!dataWithIV) return null;
-
-  const parts = dataWithIV.split("_");
-  const iv = base64ToUint8(parts[0]);
-  console.log("iv", parts[0], iv);
-
-  const encryptedBytes = base64ToUint8(parts[1]);
-
-  let decryptedBytes;
-  try {
-    decryptedBytes = await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: iv,
-        tagLength: 128,
-      },
-      key,
-      encryptedBytes,
-    );
-  } catch (e) {
-    console.log("error", e);
-  }
-  if (!decryptedBytes) throw Error("invalid");
-
-  const decryptedString = new Uint8Array(decryptedBytes);
-
-  switch (valueType) {
-    case "string":
-      return Buffer.from(decryptedBytes).toString("utf8");
-    case "number":
-      return Buffer.from(decryptedBytes).readUIntBE(
-        0,
-        decryptedBytes.byteLength,
-      );
-    case "object":
-      return JSON.parse(Buffer.from(decryptedBytes).toString("utf8"));
-    case "boolean":
-      return false;
-    // dataArray = Uint8Array.of(data);
-  }
-
-  console.log(decryptedString);
-
-  return decryptedString;
-};
-
 // const decryptData2 = await decrypt2(
 //   aesKey,
 //   "0TwFgJcUhikOWput_WEYZTDzQ6c17VGqfiDigbtvUpek=",
@@ -281,7 +192,7 @@ const test = async () => {
 
   console.log("key new", aesKey);
 
-  const decryptData2 = await decrypt2(
+  const decryptData2 = await decryptNative(
     aesKey,
     "0TwFgJcUhikOWput_WEYZTDzQ6c17VGqfiDigbtvUpek=",
     "string",
