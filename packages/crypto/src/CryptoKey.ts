@@ -1,15 +1,8 @@
 import { Buffer } from "buffer";
 
-import cryp from "isomorphic-webcrypto";
+import { CRYPTO_LENGTH } from "./config";
 
-cryp.subtle
-  .digest({ name: "SHA-256" }, new Uint8Array([1, 2, 3]).buffer)
-  .then((hash) => {
-    // hashes are usually represented as hex strings
-    // hex-lite makes this easier
-    const hashString = Buffer.from(hash).toString("hex");
-    console.log("hashString", hashString);
-  });
+import cryp from "isomorphic-webcrypto";
 
 export const importKey = async (keyToken) => {
   let newKey;
@@ -20,7 +13,7 @@ export const importKey = async (keyToken) => {
       //this is an example jwk key, "raw" would be an ArrayBuffer
       kty: "oct",
       k: keyToken,
-      alg: "A128GCM",
+      alg: `A${CRYPTO_LENGTH}GCM`,
       ext: true,
     },
     {
@@ -40,7 +33,7 @@ export const generateKey = async () => {
   newKey = await cryp.subtle.generateKey(
     {
       name: "AES-GCM",
-      length: 128, //can be  128, 192, or 256
+      length: CRYPTO_LENGTH, //can be  128, 192, or 256
     },
     true, //whether the key is extractable (i.e. can be used in exportKey)
     ["encrypt", "decrypt"], //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"

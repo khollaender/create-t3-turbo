@@ -1,6 +1,7 @@
 import { Buffer } from "buffer";
 import { z } from "zod";
 import { ConvertToEncryptType, Encryptable } from "./EncryptionTypes";
+import { CRYPTO_LENGTH, SPLIT_CHARACTER } from "./config";
 
 import cryp from "isomorphic-webcrypto";
 
@@ -32,7 +33,7 @@ const doStuff = async (data: Record<string, unknown>, cryptoKey: CryptoKey) => {
   return await Promise.all(
     Object.entries(data).map(async ([key, value]) => {
       if (
-        !key.includes("_") ||
+        !key.includes(SPLIT_CHARACTER) ||
         (typeof value !== "string" &&
           typeof value !== "number" &&
           typeof value !== "boolean")
@@ -41,7 +42,7 @@ const doStuff = async (data: Record<string, unknown>, cryptoKey: CryptoKey) => {
       } else {
         const encrypted = await encryptNative(cryptoKey, value);
 
-        return [`${key.split("_")[0]}_${typeof value}`, encrypted];
+        return [`${key.split(SPLIT_CHARACTER)[0]}_${typeof value}`, encrypted];
       }
     }),
   );
@@ -80,7 +81,7 @@ export const encryptNative = async (
         {
           name: "AES-GCM",
           iv: iv,
-          tagLength: 128,
+          tagLength: CRYPTO_LENGTH,
         },
         key,
         dataArray,

@@ -2,16 +2,9 @@ import { Buffer } from "buffer";
 import { z } from "zod";
 import { ConvertToDecryptType, Encryptable } from "./EncryptionTypes";
 
-import cryp from "isomorphic-webcrypto";
+import { CRYPTO_LENGTH, SPLIT_CHARACTER } from "./config";
 
-// cryp.subtle
-//   .digest({ name: "SHA-256" }, new Uint8Array([1, 2, 3]).buffer)
-//   .then((hash) => {
-//     // hashes are usually represented as hex strings
-//     // hex-lite makes this easier
-//     const hashString = Buffer.from(hash).toString("hex");
-//     console.log("hashString", hashString);
-//   });
+import cryp from "isomorphic-webcrypto";
 
 export async function decryptAllPropsNative<T>(
   cryptoKey: CryptoKey,
@@ -41,10 +34,13 @@ export async function decryptAllPropsNative<T>(
 const doDec = async (data: Record<string, unknown>, cryptoKey: CryptoKey) => {
   return await Promise.all(
     Object.entries(data).map(async ([key, value]) => {
-      if (!key.includes("_") || (value !== null && typeof value !== "string")) {
+      if (
+        !key.includes(SPLIT_CHARACTER) ||
+        (value !== null && typeof value !== "string")
+      ) {
         return [key, value];
       } else {
-        const [keyName, valueType] = key.split("_");
+        const [keyName, valueType] = key.split(SPLIT_CHARACTER);
         const encrypted = await decryptNative(cryptoKey, value, valueType);
         return [`${keyName}_Dec`, encrypted];
       }
@@ -59,7 +55,7 @@ export const decryptNative = async (
 ): Promise<Encryptable | null> => {
   if (!dataWithIV) return null;
 
-  const parts = dataWithIV.split("_");
+  const parts = dataWithIV.split(SPLIT_CHARACTER);
   const iv = base64ToUint8(parts[0]);
   //console.log("iv", parts[0], iv);
 
@@ -71,7 +67,7 @@ export const decryptNative = async (
       {
         name: "AES-GCM",
         iv: iv,
-        tagLength: 128,
+        tagLength: CRYPTO_LENGTH,
       },
       key,
       encryptedBytes,

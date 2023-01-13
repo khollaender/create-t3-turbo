@@ -11,7 +11,7 @@ import {
   importKey,
   decryptAllPropsNative,
   encryptAllPropsNative,
-} from "crypto";
+} from "@hamr/crypto";
 
 import {
   generateKey,
@@ -250,29 +250,29 @@ const test = async () => {
 
   //testing 10k array objects
 
-  console.log(`encrypting ${data10k.length} objects`);
-  console.time("encrypting10k");
+  // console.log(`encrypting ${data10k.length} objects`);
+  // console.time("encrypting10k");
 
-  const encryptedData10k = await Promise.all(
-    data10k.map((x) => encryptAllPropsNative(aesKey, x)),
-  );
-  console.timeEnd("encrypting10k");
-  console.log(
-    "encryptedData10k[0] ",
-    JSON.stringify(encryptedData10k[0], null, "  "),
-  );
+  // const encryptedData10k = await Promise.all(
+  //   data10k.map((x) => encryptAllPropsNative(aesKey, x)),
+  // );
+  // console.timeEnd("encrypting10k");
+  // console.log(
+  //   "encryptedData10k[0] ",
+  //   JSON.stringify(encryptedData10k[0], null, "  "),
+  // );
 
-  console.time("decrypted10k");
-  const decryptedData10k = await Promise.all(
-    encryptedData10k.map((x) => decryptAllPropsNative(aesKey, x)),
-  );
+  // console.time("decrypted10k");
+  // const decryptedData10k = await Promise.all(
+  //   encryptedData10k.map((x) => decryptAllPropsNative(aesKey, x)),
+  // );
 
-  console.timeEnd("decrypted10k");
+  // console.timeEnd("decrypted10k");
 
-  console.log(
-    "decryptedData10k[0]",
-    JSON.stringify(decryptedData10k[0], null, "  "),
-  );
+  // console.log(
+  //   "decryptedData10k[0]",
+  //   JSON.stringify(decryptedData10k[0], null, "  "),
+  // );
 };
 
 const PostCard: React.FC<{
