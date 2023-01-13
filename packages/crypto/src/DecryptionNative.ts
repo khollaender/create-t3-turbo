@@ -1,21 +1,17 @@
 import { Buffer } from "buffer";
 import { z } from "zod";
-import {
-  ConvertToDecryptType,
-  ConvertToEncryptType,
-  Encryptable,
-} from "./EncryptionTypes";
+import { ConvertToDecryptType, Encryptable } from "./EncryptionTypes";
 
 import cryp from "isomorphic-webcrypto";
 
-cryp.subtle
-  .digest({ name: "SHA-256" }, new Uint8Array([1, 2, 3]).buffer)
-  .then((hash) => {
-    // hashes are usually represented as hex strings
-    // hex-lite makes this easier
-    const hashString = Buffer.from(hash).toString("hex");
-    console.log("hashString", hashString);
-  });
+// cryp.subtle
+//   .digest({ name: "SHA-256" }, new Uint8Array([1, 2, 3]).buffer)
+//   .then((hash) => {
+//     // hashes are usually represented as hex strings
+//     // hex-lite makes this easier
+//     const hashString = Buffer.from(hash).toString("hex");
+//     console.log("hashString", hashString);
+//   });
 
 export async function decryptAllPropsNative<T>(
   cryptoKey: CryptoKey,
@@ -65,13 +61,13 @@ export const decryptNative = async (
 
   const parts = dataWithIV.split("_");
   const iv = base64ToUint8(parts[0]);
-  console.log("iv", parts[0], iv);
+  //console.log("iv", parts[0], iv);
 
   const encryptedBytes = base64ToUint8(parts[1]);
 
   let decryptedBytes;
   try {
-    decryptedBytes = await crypto.subtle.decrypt(
+    decryptedBytes = await cryp.subtle.decrypt(
       {
         name: "AES-GCM",
         iv: iv,

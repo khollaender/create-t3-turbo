@@ -190,7 +190,29 @@ const base64ToUint8 = (str: string): Uint8Array =>
 const test = async () => {
   const aesKey = await importKey("zzlJ8cyW0e3KB45kFFjaKA");
 
+  const obj = {
+    id: "633ecfa455c0564dad5294f3",
+    firstName: "Alissa",
+    lastName: "LastName",
+    email: "alissaware@orbaxter.com",
+    phone: "+1 (873) 463-2052",
+    company: "STUCCO",
+    gender: 1,
+    about:
+      "Qui ut quis ea pariatur. Velit ad quis commodo ad dolore exercitation occaecat in duis. Officia pariatur sunt adipisicing pariatur pariatur ullamco laborum consectetur incididunt elit commodo occaecat consequat. Excepteur minim Lorem cupidatat in ex ad aute non duis elit ad. Tempor minim ipsum reprehenderit do culpa id mollit et proident dolor cupidatat cupidatat magna. Incididunt consectetur aute nulla cupidatat qui eiusmod ullamco eu dolore. Aliquip irure ullamco ad minim ipsum elit nostrud fugiat.",
+    address: "781 Fanchon Place, Fedora, New Mexico, 5292",
+  };
+
+  const test = await encryptAllPropsNative(aesKey, obj);
+
   console.log("key new", aesKey);
+  console.log(JSON.stringify(test, null, "  "));
+
+  const testDec = await decryptAllPropsNative(aesKey, test);
+  console.log("decryprops", JSON.stringify(testDec, null, "  "));
+
+  const encData = await encryptNative(aesKey, 1);
+  console.log("encDatanative", encData);
 
   const decryptData2 = await decryptNative(
     aesKey,
@@ -198,7 +220,59 @@ const test = async () => {
     "string",
   );
 
-  console.log("decryptData2", decryptData2);
+  const decryptDataNative = await decryptNative(aesKey, encData, "number");
+
+  console.log("decryptData2", decryptData2, decryptDataNative);
+
+  console.log(`encrypting ${data1k.length} objects`);
+  console.time("encrypting1k");
+
+  const encryptedData1k = await Promise.all(
+    data1k.map((x) => encryptAllPropsNative(aesKey, x)),
+  );
+  console.timeEnd("encrypting1k");
+  console.log(
+    "encryptedData1k[0] ",
+    JSON.stringify(encryptedData1k[0], null, "  "),
+  );
+
+  console.time("decrypted1k");
+  const decryptedData1k = await Promise.all(
+    encryptedData1k.map((x) => decryptAllPropsNative(aesKey, x)),
+  );
+
+  console.timeEnd("decrypted1k");
+
+  console.log(
+    "decryptedData1k[0]",
+    JSON.stringify(decryptedData1k[0], null, "  "),
+  );
+
+  //testing 10k array objects
+
+  console.log(`encrypting ${data10k.length} objects`);
+  console.time("encrypting10k");
+
+  const encryptedData10k = await Promise.all(
+    data10k.map((x) => encryptAllPropsNative(aesKey, x)),
+  );
+  console.timeEnd("encrypting10k");
+  console.log(
+    "encryptedData10k[0] ",
+    JSON.stringify(encryptedData10k[0], null, "  "),
+  );
+
+  console.time("decrypted10k");
+  const decryptedData10k = await Promise.all(
+    encryptedData10k.map((x) => decryptAllPropsNative(aesKey, x)),
+  );
+
+  console.timeEnd("decrypted10k");
+
+  console.log(
+    "decryptedData10k[0]",
+    JSON.stringify(decryptedData10k[0], null, "  "),
+  );
 };
 
 const PostCard: React.FC<{
